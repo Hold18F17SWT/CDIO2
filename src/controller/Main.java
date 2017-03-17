@@ -10,7 +10,7 @@ import socket.ISocketController;
  *
  */
 public class Main {
-	private static boolean gui= true;
+	private static boolean gui = true;
 
 	public static void main(String[] args) {
 		ISocketController socketHandler = new SocketController();
@@ -19,6 +19,5 @@ public class Main {
 		IMainController mainCtrl = new MainController(socketHandler, weightController);
 		//.init and .start could be merged
 		mainCtrl.start();
-		
 	}
 }

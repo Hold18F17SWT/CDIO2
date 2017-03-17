@@ -18,6 +18,12 @@ public class MainController implements IMainController, ISocketObserver, IWeight
 	private ISocketController socketHandler;
 	private IWeightInterfaceController weightController;
 	private KeyState keyState = KeyState.K1;
+	//Things for UI controller
+	private int i=0;
+	private String text ="";
+	private char[] a = new char[30];
+	private double tara = 0.0;
+	private double weightCurrent = 0.0;
 
 	public MainController(ISocketController socketHandler, IWeightInterfaceController weightInterfaceController) {
 		this.init(socketHandler, weightInterfaceController);
@@ -26,19 +32,19 @@ public class MainController implements IMainController, ISocketObserver, IWeight
 	@Override
 	public void init(ISocketController socketHandler, IWeightInterfaceController weightInterfaceController) {
 		this.socketHandler = socketHandler;
-		this.weightController=weightInterfaceController;
+		this.weightController = weightInterfaceController;
 	}
 
 	@Override
 	public void start() {
-		if (socketHandler!=null && weightController!=null){
+		if (socketHandler!=null && weightController!=null) {
 			//Makes this controller interested in messages from the socket
 			socketHandler.registerObserver(this);
 			//Starts socketHandler in own thread
 			new Thread(socketHandler).start();
-			//TODO set up weightController - Look above for inspiration (Keep it simple ;))
-
-
+			//FIXME (Måske jeg har lavet det) set up weightController - Look above for inspiration (Keep it simple ;))
+            weightController.registerObserver(this);
+			new Thread(weightController).start();
 		} else {
 			System.err.println("No controllers injected!");
 		}
@@ -49,19 +55,25 @@ public class MainController implements IMainController, ISocketObserver, IWeight
 	public void notify(SocketInMessage message) {
 		switch (message.getType()) {
 		case B:
+			notifyWeightChange(Double.parseDouble(message.getMessage()));
 			break;
 		case D:
 			weightController.showMessagePrimaryDisplay(message.getMessage()); 
 			break;
 		case Q:
+			System.exit(1);
 			break;
 		case RM204:
 			break;
 		case RM208:
+			weightController.showMessageSecondaryDisplay(message.getMessage());
 			break;
 		case S:
+			socketHandler.sendMessage(new SocketOutMessage(""+(weightCurrent-tara)));
 			break;
 		case T:
+			tara = weightCurrent;
+			notifyWeightChange(tara);
 			break;
 		case DW:
 			break;
@@ -69,9 +81,9 @@ public class MainController implements IMainController, ISocketObserver, IWeight
 			handleKMessage(message);
 			break;
 		case P111:
+			weightController.showMessageSecondaryDisplay(message.getMessage());
 			break;
 		}
-
 	}
 
 	private void handleKMessage(SocketInMessage message) {
@@ -96,33 +108,45 @@ public class MainController implements IMainController, ISocketObserver, IWeight
 	//Listening for UI input
 	@Override
 	public void notifyKeyPress(KeyPress keyPress) {
-		//TODO implement logic for handling input from ui
+		//FIXME Ting vi har lavet er her
 		switch (keyPress.getType()) {
 		case SOFTBUTTON:
+			//We dont know what to implement here
 			break;
 		case TARA:
+            tara = weightCurrent;
+            notifyWeightChange(tara);
 			break;
 		case TEXT:
+			a[i]=keyPress.getCharacter();
+			text += a[i];
+			i++;
+			weightController.showMessageSecondaryDisplay(text);
 			break;
 		case ZERO:
+		    tara = 0.0;
+			notifyWeightChange(0.0);
 			break;
 		case C:
+			i=0;
+			text="";
+			weightController.showMessageSecondaryDisplay(text);
 			break;
 		case EXIT:
+			System.exit(1);
 			break;
 		case SEND:
-			if (keyState.equals(KeyState.K4) || keyState.equals(KeyState.K3) ){
+			if (keyState.equals(KeyState.K4) || keyState.equals(KeyState.K3) ) {
 				socketHandler.sendMessage(new SocketOutMessage("K A 3"));
 			}
 			break;
 		}
-
 	}
 
 	@Override
+    //FIXME også noget vi har lavet her
 	public void notifyWeightChange(double newWeight) {
-		// TODO Auto-generated method stub
-
+	    weightCurrent = newWeight;
+		weightController.showMessagePrimaryDisplay(""+(weightCurrent-tara));
 	}
-
 }

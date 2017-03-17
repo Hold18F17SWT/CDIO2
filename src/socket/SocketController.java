@@ -9,6 +9,7 @@ import java.net.Socket;
 import java.util.HashSet;
 import java.util.Set;
 
+import com.sun.xml.internal.ws.encoding.soap.SOAP12Constants;
 import socket.SocketInMessage.SocketMessageType;
 
 public class SocketController implements ISocketController {
@@ -31,7 +32,13 @@ public class SocketController implements ISocketController {
 	@Override
 	public void sendMessage(SocketOutMessage message) {
 		if (outStream!=null){
-			//TODO send something over the socket! 
+			try {
+				outStream.writeBytes(message.getMessage() + '\n');
+			} catch (IOException e) {
+				e.printStackTrace();
+			}
+
+
 		} else {
 			//TODO maybe tell someone that connection is closed?
 		}
@@ -67,37 +74,45 @@ public class SocketController implements ISocketController {
 				if (inLine==null) break;
 				switch (inLine.split(" ")[0]) {
 				case "RM20": // Display a message in the secondary display and wait for response
-					//TODO implement logic for RM command
+					notifyObservers(new SocketInMessage(SocketMessageType.RM208, inLine.split(" ")[1]));
+					sendMessage(new SocketOutMessage("Wait for responce\n"));
 					break;
 				case "D":// Display a message in the primary display
 					//TODO Refactor to make sure that faulty messages doesn't break the system
-					notifyObservers(new SocketInMessage(SocketMessageType.D, inLine.split(" ")[1])); 			
+					notifyObservers(new SocketInMessage(SocketMessageType.D, inLine.split(" ")[1]));
+					sendMessage(new SocketOutMessage("Display Updated\n"));
 					break;
 				case "DW": //Clear primary display
-					//TODO implement
+					notifyObservers(new SocketInMessage(SocketMessageType.D, ""));
+					sendMessage(new SocketOutMessage("Cleared primary display\n"));
 					break;
 				case "P111": //Show something in secondary display
-					//TODO implement
+					notifyObservers(new SocketInMessage(SocketMessageType.P111, inLine.split(" ")[1]));
+					sendMessage(new SocketOutMessage("Message Displayed\n"));
 					break;
 				case "T": // Tare the weight
-					//TODO implement
+					notifyObservers(new SocketInMessage(SocketMessageType.T, ""));
+					sendMessage(new SocketOutMessage("Weight tared"));
 					break;
 				case "S": // Request the current load
-					//TODO implement
+					notifyObservers(new SocketInMessage(SocketMessageType.S,""));
 					break;
 				case "K":
 					if (inLine.split(" ").length>1){
 						notifyObservers(new SocketInMessage(SocketMessageType.K, inLine.split(" ")[1]));
+						sendMessage(new SocketOutMessage("OK"));
 					}
 					break;
 				case "B": // Set the load
-					//TODO implement
+					notifyObservers(new SocketInMessage(SocketMessageType.B, inLine.split(" ")[1]));
+					sendMessage(new SocketOutMessage("Load set"));
 					break;
 				case "Q": // Quit
-					//TODO implement
+					notifyObservers(new SocketInMessage(SocketMessageType.Q,""));
+					sendMessage(new SocketOutMessage("Goodbye"));
 					break;
 				default: //Something went wrong?
-					//TODO implement
+					sendMessage(new SocketOutMessage("ES"));
 					break;
 				}
 			}

@@ -56,7 +56,7 @@ public class WeightInterfaceControllerGUI implements IWeightInterfaceController 
 		Arrays.fill(sftkeysChecked, false);
 		fxApp.softkeysShow(texts, firstSoftkey, sftkeysChecked);
 	}
-	
+
 	
 	// GUI --> System
 	public void onSliderValueChange(Double newValue) {
@@ -85,6 +85,11 @@ public class WeightInterfaceControllerGUI implements IWeightInterfaceController 
 			o.notifyKeyPress(KeyPress.Send());
 		}
 	}
+	void onCancelButtonPressed() {
+		for (IWeightInterfaceObserver o : observers) {
+			o.notifyKeyPress(KeyPress.CancelButton());
+		}
+	}
 	public void onNumBtnPressed(char btn){
 		for (IWeightInterfaceObserver o : observers) {
 			o.notifyKeyPress(KeyPress.Character(btn));
@@ -95,29 +100,4 @@ public class WeightInterfaceControllerGUI implements IWeightInterfaceController 
 			o.notifyKeyPress(KeyPress.SoftButton(i));
 		}
 	}
-	
-	
-	
-	
-	
-	
-	
-
-
-	
-	
-	
-	
-	
-	
-	
-	
-	
-	
-	
-	
-	
-	
-	
-
 }
